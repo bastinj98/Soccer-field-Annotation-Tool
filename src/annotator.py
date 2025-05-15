@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import filedialog
 
 RADIUS = 8
-MIN_KEYPOINTS = 17
+REQUIRED_KEYPOINTS = 17
 ANNOTATION_FILE = "annotations.json"
 
 keypoints = []
@@ -20,21 +20,26 @@ current_image = None
 def draw_overlay(img, kp_count):
     display = img.copy()
     
-    status_text = f"Keypoints: {kp_count} | "
-    status_text += "Warning: atleast 17 keypoints needed: 16 for periphery and 1 for center!" if kp_count < MIN_KEYPOINTS else "OK"
+    status_text = f"Keypoints: {kp_count}/17 | "
+    if kp_count < REQUIRED_KEYPOINTS:
+        status_text += "Add more keypoints"
+    elif kp_count > REQUIRED_KEYPOINTS:
+        status_text += "Too many keypoints"
+    else:
+        status_text += "Ready to Save"
 
     help_text = [
         "Controls:",
         "'left-click': Add point, 'drag': to move/adjust point",
         "'u': Undo   'r': Reset",
         "'n': Next   'p': Prev",
-        "'s': Save",
+        "'s': Save (only if 17 keypoints)",
         "ESC: Exit"
     ]
 
     cv2.rectangle(display, (0, 0), (850, 190), (0, 0, 0), -1)  # background
     cv2.putText(display, status_text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
-                (0, 255, 255) if kp_count < MIN_KEYPOINTS else (0, 255, 0), 2)
+                (0, 255, 255) if kp_count != REQUIRED_KEYPOINTS else (0, 255, 0), 2)
 
     for i, line in enumerate(help_text):
         cv2.putText(display, line, (10, 40 + 20 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
@@ -58,7 +63,8 @@ def mouse_callback(event, x, y, flags, param):
             if (x - px) ** 2 + (y - py) ** 2 < RADIUS ** 2:
                 drag_idx = i
                 return
-        keypoints.append((x, y))
+        if len(keypoints) < REQUIRED_KEYPOINTS:
+            keypoints.append((x, y))
         draw_keypoints()
 
     elif event == cv2.EVENT_MOUSEMOVE and drag_idx != -1:
@@ -83,6 +89,12 @@ def load_image():
 
 def save_current_annotation():
     global status_message
+    if len(keypoints) != REQUIRED_KEYPOINTS:
+        status_message = f"Cannot save: need exactly {REQUIRED_KEYPOINTS} keypoints"
+        draw_keypoints()
+        print(status_message)
+        return
+
     annotations[images[image_idx]] = keypoints.copy()
     anno_path = os.path.join(image_folder, ANNOTATION_FILE)
     with open(anno_path, "w") as f:
