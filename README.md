@@ -27,7 +27,7 @@ This is a simple, easy-to-use desktop annotation tool that helps you manually la
 
 Once the tool opens:
 
-- **Left-click** to add keypoints (add at least **17** total — 16 around the circle and 1 center)
+- **Left-click** to add keypoints (add EXACTLY **17** total — 16 around the circle and 1 center)
 - **Click and drag** a keypoint to adjust its position
 - You’ll see live instructions and keypoint counts on the screen
 
